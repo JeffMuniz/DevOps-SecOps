@@ -1,0 +1,443 @@
+@NonCPS
+def slackNotifier(String buildResult) {
+  if ( buildResult == "SUCCESS" ) {
+    slackSend ( color: "good",
+    teamDomain: 'macmaceficios',
+    tokenCredentialId: 'mac-slack',
+    channel: '#team_portador-build',
+    message: "Job: ${env.JOB_NAME} \nBuild: ${env.BUILD_NUMBER} \nStatus: Sucesso \nTempo: ${currentBuild.durationString.minus(' and counting')}")
+  }
+  else if( buildResult == "FAILURE" ) {
+    slackSend( color: "danger",
+    teamDomain: 'macmaceficios',
+    tokenCredentialId: 'mac-slack',
+    channel: '#team_portador-build',
+    message: "Job: ${env.JOB_NAME} \nBuild: ${env.BUILD_NUMBER} \nStatus: Falha \nTempo: ${currentBuild.durationString.minus(' and counting')}")
+  }
+  else if( buildResult == "UNSTABLE" ) {
+    slackSend( color: "warning",
+      teamDomain: 'macmaceficios',
+      tokenCredentialId: 'mac-slack',
+      channel: '#team_portador-build',
+      message: "Job: ${env.JOB_NAME} \nBuild: ${env.BUILD_NUMBER} \nStatus: Unstable \nTempo: ${currentBuild.durationString.minus(' and counting')}")
+  }
+  else if( buildResult == "ABORTED" ) {
+    slackSend( teamDomain: 'macmaceficios',
+      tokenCredentialId: 'mac-slack',
+      channel: '#team_portador-build',
+      message: "Job: ${env.JOB_NAME} \nBuild: ${env.BUILD_NUMBER} \nStatus: Abortado \nTempo: ${currentBuild.durationString.minus(' and counting')}")
+  }
+  else if( buildResult == "null" ) {
+    slackSend( color: "warning",
+      teamDomain: 'macmaceficios',
+      tokenCredentialId: 'mac-slack',
+      channel: '#team_portador-build',
+      message: "Job: ${env.JOB_NAME} \nBuild: ${env.BUILD_NUMBER} \nStatus: Desconhecido \nTempo: ${currentBuild.durationString.minus(' and counting')}")
+  }
+}
+
+def startMsg() {
+  commit_desc = sh(script: "git log -1 --format='format:%s'", returnStdout: true).trim()
+  slackSend(teamDomain: 'macmaceficios',
+    tokenCredentialId: 'mac-slack',
+    channel: '#team_portador-build',
+    message: "Job: ${env.JOB_NAME} \nBuild: <${env.BUILD_URL}|build ${env.BUILD_DISPLAY_NAME}> \nIniciado por: ${env.BUILD_USER}\n Commit: ${commit_desc}\nBranch: ${env.BRANCH_NAME}")
+}
+
+@NonCPS
+def configFromBranch(branch) {
+    def env_dev = [
+        rancherContext: 'c-nljn9:p-f8t95',
+        deploymentFile: 'deployment.yml',
+        namespace: 'mac-api-func-develop'
+    ]
+    def env_qa = [
+        rancherContext: 'c-nljn9:p-dw4nh',
+        deploymentFile: 'deployment.yml',
+        namespace: 'mac-api-func-qa'
+    ]
+    def env_staging = [
+        rancherContext: 'c-7lfvg:p-zv79p',
+        deploymentFile: 'deployment-stg.yml',
+        namespace: 'mac-api-func-staging'
+    ]
+    def env_prd = [
+        filePath: 'prod',
+        projectName: 'stack-mac-api-funcionario-prd'
+    ]
+    if (branch ==~ /(develop)/) {
+        return [
+            shouldTest: true,
+            shouldAnalyze: true,
+            shouldBuildImage: true,
+            shouldPushImage: true,
+            shouldDeploy2: true,
+            shouldDeploy16: false,
+            shouldStoreArtifact: false,
+            prefix: 'func-develop',
+            rancherCred: 'rancher2-dev-token',
+            rancherURL: 'rancher2-dev-url',
+            dockerfile: 'Dockerfile',
+            registryCred: 'macReg',
+            registryURL: 'macdevcr.azurecr.io/sciensa',
+            testAgent: 'TestContainer',
+            buildAgent: 'Build',
+            tag: 'dev',
+            env: 'dev',
+            deployments: [env_dev]
+        ]
+    }
+    else if (branch ==~ /(qa)/) {
+        return [
+            shouldTest: true,
+            shouldAnalyze: true,
+            shouldBuildImage: true,
+            shouldPushImage: true,
+            shouldDeploy2: true,
+            shouldDeploy16: false,
+            shouldStoreArtifact: false,
+            prefix: 'func-qa',
+            rancherCred: 'rancher2-dev-token',
+            rancherURL: 'rancher2-dev-url',
+            dockerfile: 'Dockerfile',
+            registryCred: 'macReg',
+            registryURL: 'macdevcr.azurecr.io/sciensa',
+            testAgent: 'TestContainer',
+            buildAgent: 'Build',
+            tag: 'qa',
+            env: 'qa',
+            deployments: [env_qa]
+        ]
+    }
+    else if (branch ==~ /(staging)/) {
+        return [
+            shouldTest: false,
+            shouldAnalyze: false,
+            shouldBuildImage: true,
+            shouldPushImage: true,
+            shouldDeploy2: true,
+            shouldDeploy16: false,
+            shouldStoreArtifact: false,
+            prefix: 'func-staging',
+            rancherCred: 'rancher2-dev-token',
+            rancherURL: 'rancher2-dev-url',
+            dockerfile: 'Dockerfile',
+            registryCred: 'macReg',
+            registryURL: 'macdevcr.azurecr.io/sciensa',
+            testAgent: 'TestContainer',
+            buildAgent: 'Build',
+            tag: 'stg',
+            env: 'stg',
+            deployments: [env_staging]
+        ]
+    }
+    else if (branch ==~ /(master)/) {
+        return [
+            shouldTest: false,
+            shouldAnalyze: false,
+            shouldBuildImage: true,
+            shouldPushImage: true,
+            shouldDeploy2: false,
+            shouldDeploy16: true,
+            shouldStoreArtifact: true,
+            prefix: 'func-prd',
+            rancherCred: '',
+            rancherURL: 'rancher-url-prod',
+            rancherAK: 'rancher-ak-prod',
+            rancherSK: 'rancher-sk-prod',
+            springUrl: 'spring-url-mac-api-funcionario-prd',
+            springUsername: 'spring-username-mac-api-funcionario-prd',
+            springPassword: 'spring-password-mac-api-funcionario-prd',
+            springUrlControle: 'spring-url-mac-api-funcionario-controle-prd',
+            springUsernameControle: 'spring-username-mac-api-funcionario-controle-prd',
+            springPasswordControle: 'spring-password-mac-api-funcionario-controle-prd',
+            hostHist: 'historico-host-mac-api-funcionario-prd',
+            dockerfile: 'Dockerfile',
+            registryCred: 'bluecr',
+            registryURL: 'bluecr.azurecr.io/blue',
+            testAgent: '10.50.131.36',
+            buildAgent: '10.50.131.36',
+            tag: 'prd',
+            env: 'prd',
+            deployments: [env_prd]
+        ]
+    }
+    else {
+        return [
+            shouldTest: true,
+            shouldAnalyze: true,
+            shouldBuildImage: false,
+            shouldPushImage: false,
+            shouldDeploy2: false,
+            shouldDeploy16: false,
+            shouldStoreArtifact: false,
+            versionCMD: '',
+            registryCred: '',
+            registryURL: '',
+            testAgent: 'TestContainer',
+            buildAgent: 'Build',
+            tag: '-',
+            env: '-',
+            deployments: []
+        ]
+    }
+}
+
+pipeline {
+    agent none
+
+    environment {
+        CONFIG = configFromBranch(BRANCH_NAME)
+        SHOULD_TEST = "${CONFIG.shouldTest}"
+        SHOULD_ANALYZE = "${CONFIG.shouldAnalyze}"
+        SHOULD_BUILD_IMAGE = "${CONFIG.shouldBuildImage}"
+        SHOULD_PUSH_IMAGE = "${CONFIG.shouldPushImage}"
+        SHOULD_DEPLOY_16 = "${CONFIG.shouldDeploy16}"
+        SHOULD_DEPLOY_2 = "${CONFIG.shouldDeploy2}"
+        SHOUD_STORE_ARTIFACT = "${CONFIG.shouldStoreArtifact}"
+        DOCKERFILE = "${CONFIG.dockerfile}"
+
+        SPRING_URL = "${CONFIG.springUrl}"
+        SPRING_USERNAME = "${CONFIG.springUsername}"
+        SPRING_PASSWORD = "${CONFIG.springPassword}"
+        SPRING_URL_CONTROLE = "${CONFIG.springUrlControle}"
+        SPRING_USER_CONTROLE = "${CONFIG.springUsernameControle}"
+        SPRING_PASSWD_CONTROLE = "${CONFIG.springPasswordControle}"
+        HOST_HIST = "${CONFIG.hostHist}"
+        
+        RANCHER_CRED = "${CONFIG.rancherCred}"
+        RANCHER_URL = "${CONFIG.rancherURL}"
+        RANCHER_AK = "${CONFIG.rancherAK}"
+        RANCHER_SK = "${CONFIG.rancherSK}"
+
+        ENV = "${CONFIG.env}"
+        TEST_AGENT = "${CONFIG.testAgent}"
+        BUILD_AGENT = "${CONFIG.buildAgent}"
+
+        PREFIX = "${CONFIG.prefix}"
+        PATH_SWAGGER = "/"
+
+        GIT_URL="https://macvisavale:9qvRSXc5xxeKkzWCbw89@bitbucket.org/macvisavale/mac-api-funcionario.git"
+        PROJECT_NAME="mac-api-func"
+
+        REGISTRY_CRED = "${CONFIG.registryCred}"
+        REGISTRY_URL = "${CONFIG.registryURL}"
+
+        IMAGE_TAG = "${CONFIG.tag}"
+        IMAGE_NAME = "${PROJECT_NAME}:${IMAGE_TAG}"
+        IMAGE_URL = "${CONFIG.registryURL}/${PROJECT_NAME}/${IMAGE_NAME}"
+    }
+
+    stages {
+        stage ('CI') {
+            agent {
+                label "${TEST_AGENT}"
+            }
+            stages {
+                stage('SCM - Checkout') {
+                    steps{
+                        cleanWs()
+                        git branch: BRANCH_NAME,
+                        url: GIT_URL
+                        echo 'SCM Checkout'
+                    }
+                }
+                stage ('Tests'){
+                    when {
+                        expression { SHOULD_TEST == 'true' }
+                    }
+                    stages {
+                        stage('Integration Tests - Maven'){
+                            steps {
+                                withMaven( maven: 'maven-3', jdk: 'jdk11-open', mavenSettingsConfig: 'mvn-setting-xml'){
+                                    timeout ( time: 15, unit: 'MINUTES'){
+                                        sh './mvnw clean verify -Dcucumber.options="--tags ~@IntegrationTest"'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                stage ('SonarQube & Quality Gate'){
+                    when {
+                        expression { SHOULD_ANALYZE == 'true' }
+                    }
+                    stages{
+                        stage('Analysis - SonarQube'){
+                            steps {
+                                withSonarQubeEnv('SONAR'){
+                                    sh "./mvnw sonar:sonar \
+                                        -Dsonar.projectName=\"${PROJECT_NAME}\" \
+                                        -Dsonar.projectKey=\"${PROJECT_NAME}\""
+                                }
+                            }
+                        }
+                        stage('Quality gate'){
+                            steps {
+                                timeout ( time: 1, unit: 'HOURS'){
+                                    script{
+                                        def qg = waitForQualityGate()
+                                        if (qg.status != 'OK'){
+                                            error "Pipeline aborted due to a quality gate failure: ${qg.status}"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        stage ('CD') {
+            stages {
+                stage ('Deploy') {
+                    agent {
+                       label "${BUILD_AGENT}"
+                    }
+                    stages{
+                        stage('Build - Maven'){
+                            steps{
+                                withMaven( maven: 'maven-3', jdk: 'jdk11-open', mavenSettingsConfig: 'mvn-setting-xml'){
+                                    sh "./mvnw clean package -DskipTests"
+                                }
+                            }
+                        }
+                        stage ('Docker - Build') {
+                            when {
+                              expression { SHOULD_BUILD_IMAGE == 'true' }
+                            }
+                            steps {
+                                script {
+                                    if ("${BRANCH_NAME}" == 'master') {
+                                        VERSION_RANCHER = sh(script: "echo \"-\$(printf \'VER\t\${project.version}\' | mvn help:evaluate | grep \'^VER\' | cut -f2)\"", , returnStdout: true).trim()
+                                        VERSION_DOCKER  = "${VERSION_RANCHER}"
+                                    } else if ("${BRANCH_NAME}" == 'staging'){
+                                        VERSION_RANCHER = ""
+                                        VERSION_DOCKER  = sh(script: "echo \"-\$(printf \'VER\t\${project.version}\' | mvn help:evaluate | grep \'^VER\' | cut -f2)\"", , returnStdout: true).trim()
+                                    } else {
+                                        VERSION_RANCHER = ""
+                                        VERSION_DOCKER = sh(script: "echo -${env.BUILD_ID}", , returnStdout: true).trim()
+                                    }
+                                }
+                                withDockerRegistry([ credentialsId: "macReg", url: "https://macdevcr.azurecr.io/blue" ]) {
+                                    sh "docker build --pull --file ${DOCKERFILE} -t ${IMAGE_URL}${VERSION_DOCKER} --no-cache ."
+                                    echo "Image build complete"
+                                }
+                            }
+                        }
+                        stage('Docker - Push'){
+                            when {
+                              expression { SHOULD_PUSH_IMAGE == 'true' }
+                            }
+                            steps{
+                                withDockerRegistry([ credentialsId: "${REGISTRY_CRED}", url: "https://${REGISTRY_URL}" ]) {
+                                    sh "docker push ${IMAGE_URL}${VERSION_DOCKER}"
+                                    echo "Image push complete"
+                                }
+                            }
+                        }
+                        stage('Rancher 2 - Deploy'){
+                            when {
+                              expression { SHOULD_DEPLOY_2 == 'true' }
+                            }
+                            steps {
+                                script { 
+                                    for (deployment in configFromBranch(BRANCH_NAME).deployments) {
+                                        withCredentials([string(credentialsId: "${RANCHER_CRED}", variable: 'rancherToken')]){
+	                                      sh "/usr/bin/rancher login --token ${rancherToken} --skip-verify --context ${deployment.rancherContext} https://rancher-mac.devcdt.com.br/ " } 
+                                        sh """
+                                        sed '
+                                          s,{{IMAGE_URL}},${IMAGE_URL}${VERSION_DOCKER},g;
+                                          s,{{NAMESPACE}},${deployment.namespace},g;
+                                          s,{{PROJECT_NAME}},${PROJECT_NAME},g;
+                                          s,{{BRANCH_NAME}},${BRANCH_NAME},g;
+                                          s,{{PREFIX}},${PREFIX},g;
+                                          s,{{ENV}},${ENV},g;
+                                        ' ${deployment.deploymentFile} | /usr/bin/rancher kubectl apply -f -
+                                        """
+                                    }
+                                }
+                             }
+                         }
+                         stage('Rancher 1.6 - Deploy'){
+                            when {
+                              expression { SHOULD_DEPLOY_16 == 'true' }
+                            }
+                            steps {
+                                script {                            
+                                    for (deployment in configFromBranch(BRANCH_NAME).deployments) 
+                                        withCredentials([
+                                                string(credentialsId: "${RANCHER_URL}", variable: 'rancherURL'),
+                                                string(credentialsId: "${RANCHER_AK}", variable: 'rancherAK'),
+                                                string(credentialsId: "${RANCHER_SK}", variable: 'rancherSK'),
+                                                string(credentialsId: "${SPRING_URL}", variable: 'springUrl'),
+                                                string(credentialsId: "${SPRING_USERNAME}", variable: 'springUsername'),
+                                                string(credentialsId: "${SPRING_PASSWORD}", variable: 'springPassword'),
+                                                string(credentialsId: "${SPRING_URL_CONTROLE}", variable: 'springUrlControle'),
+                                                string(credentialsId: "${SPRING_USER_CONTROLE}", variable: 'springUsernameControle'),
+                                                string(credentialsId: "${SPRING_PASSWD_CONTROLE}", variable: 'springPasswordControle'),
+                                                string(credentialsId: "${HOST_HIST}", variable: 'hostHist'),
+                                                ]){
+                                        sh """
+                                            sed -i '
+                                              s,SPRING_URL_VALUE,${springUrl},g;
+                                              s,SPRING_USER_VALUE,${springUsername},g;
+                                              s,SPRING_PASSWORD_VALUE,${springPassword},g;
+                                              s,SPRING_URL_CONTROLE_VALUE,${springUrlControle},g;
+                                              s,SPRING_USER_CONTROLE_VALUE,${springUsernameControle},g;
+                                              s,SPRING_PASSWD_CONTROLE_VALUE,${springPasswordControle},g;
+                                              s,HOST_HIST_VALUE,${hostHist},g;
+                                              s,{{IMAGE_NAME}},${IMAGE_URL}${VERSION_DOCKER},g;
+                                              s,BRANCH,${deployment.filePath},g;
+                                            ' docker/${deployment.filePath}/docker-compose.yml
+                                            """
+                                        sh """
+                                            sed -i '
+                                              s,BRANCH,${BRANCH_NAME},g;
+                                            ' docker/${deployment.filePath}/rancher-compose.yml
+                                            """
+                                        sh "/opt/rancher-compose/bin/rancher-compose --debug \
+                                            --project-name ${deployment.projectName}${VERSION_RANCHER} \
+                                            --file docker/${deployment.filePath}/docker-compose.yml \
+                                            --rancher-file docker/${deployment.filePath}/rancher-compose.yml \
+                                            --url ${rancherURL} \
+                                            --access-key ${rancherAK} \
+                                            --secret-key ${rancherSK} up \
+                                            --upgrade -d \
+                                            --force-upgrade \
+                                            --confirm-upgrade \
+                                            --interval \"30000\" \
+                                            --batch-size \"1\"" 
+                                    }
+                                }
+                            }
+                         }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script{
+                slackNotifier('SUCCESS')
+            }
+        }
+        failure{
+            script{
+                slackNotifier('FAILURE')
+            }
+        }
+        unstable{
+            script{
+                slackNotifier('UNSTABLE')
+            }
+        }
+        aborted{
+            script{
+                slackNotifier('ABORTED')
+            }
+        }
+    }
+}
