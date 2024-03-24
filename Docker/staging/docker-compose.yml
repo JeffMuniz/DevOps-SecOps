@@ -1,10 +1,16 @@
-est-wrk-autoec-lead-BRANCH:
-  image: IMAGE
-  entrypoint: java -Xms512m -Xmx512m -XX:+UseParallelGC -jar est-wrk-autoec-lead.jar
+mac-api-funcionario-BRANCH:
+  image: {{IMAGE_NAME}}
   environment:
-    - SPRING_PROFILES_ACTIVE=staging
-# Antes de alterar pergunte para o time de infra
+    - SPRING_PROFILES_ACTIVE=env
+    - SPRING_DATASOURCE_BLUE_JDBC_URL=SPRING_URL_VALUE
+    - SPRING_DATASOURCE_BLUE_USERNAME=SPRING_USER_VALUE
+    - SPRING_DATASOURCE_BLUE_PASSWORD=SPRING_PASSWORD_VALUE
+    - SPRING_DATASOURCE_CONTROLE_ACESSO_JDBC_URL=SPRING_URL_CONTROLE_VALUE
+    - SPRING_DATASOURCE_CONTROLE_ACESSO_USERNAME=SPRING_USER_CONTROLE_VALUE
+    - SPRING_DATASOURCE_CONTROLE_ACESSO_PASSWORD=SPRING_PASSWD_CONTROLE_VALUE
+    - SPRING_HISTORICO_HOST=HOST_HIST_VALUE
   labels:
-    aplicacao: est-wrk-autoec-lead-BRANCH
+    aplicacao: mac-api-funcionario-BRANCH
     io.rancher.scheduler.affinity:host_label: api_nova=true
     io.rancher.container.pull_image: always
+    io.rancher.scheduler.global: 'true'
