@@ -272,7 +272,7 @@ pipeline {
                             steps {
                                 script {
                                     for (deployment in configFromBranch(BRANCH_NAME).deployments) {
-                                        sh "echo yes | /usr/bin/rancher login --token token-lxxmp:cznmfmm5k9fh9whdzkbmqhqbbswnpmcwznzvnwc2ljmsp5hfxq5qw9  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
+                                        sh "echo yes | /usr/bin/rancher login --token token-some-token  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
                                         sh """
                                             sed '
                                               s,{{IMAGE_URL}},${IMAGE_URL},g;
@@ -586,7 +586,7 @@ pipeline {
                             steps {
                                 script {
                                     for (deployment in configFromBranch(BRANCH_NAME).deployments) {
-                                        sh "echo yes | /usr/bin/rancher login --token token-lxxmp:cznmfmm5k9fh9whdzkbmqhqbbswnpmcwznzvnwc2ljmsp5hfxq5qw9  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
+                                        sh "echo yes | /usr/bin/rancher login --token token-some-token  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
                                         sh """
                                             sed '
                                               s,{{IMAGE_URL}},${IMAGE_URL},g;
@@ -912,7 +912,7 @@ pipeline {
                             steps {
                                 script {
                                     for (deployment in configFromBranch(BRANCH_NAME).deployments) {
-                                        sh "echo yes | /usr/bin/rancher login --token token-lxxmp:cznmfmm5k9fh9whdzkbmqhqbbswnpmcwznzvnwc2ljmsp5hfxq5qw9  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
+                                        sh "echo yes | /usr/bin/rancher login --token token-some-token  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
                                         sh """
                                             sed '
                                               s,{{IMAGE_URL}},${IMAGE_URL},g;
@@ -1232,7 +1232,7 @@ pipeline {
                             steps {
                                 script {
                                     for (deployment in configFromBranch(BRANCH_NAME).deployments) {
-                                        sh "echo yes | /usr/bin/rancher login --token token-lxxmp:cznmfmm5k9fh9whdzkbmqhqbbswnpmcwznzvnwc2ljmsp5hfxq5qw9  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
+                                        sh "echo yes | /usr/bin/rancher login --token token-some-token  --context ${deployment.rancherContext} --name rancher2 https://ec2-18-228-89-100.sa-east-1.compute.amazonaws.com/v3"
                                         sh """
                                             sed '
                                               s,{{IMAGE_URL}},${IMAGE_URL},g;

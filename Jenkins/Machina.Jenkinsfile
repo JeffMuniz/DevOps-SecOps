@@ -1,4 +1,4 @@
-//http://riosa04.machina.local:8081/fature/fature-auditado/sync-capeante/blob/master/Jenkinsfile#L497
+//http://machina.machina.local:8081/fature/fature-auditado/sync-capeante/blob/master/Jenkinsfile#L497
 
 
 #!/usr/bin/env groovy
