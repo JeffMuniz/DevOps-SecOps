@@ -16,3 +16,6 @@ O repositório está organizado da seguinte forma:
 ![alt text](1649015334395.jpeg)
 ![alt text](DevOps-Tree.jpg)
 ![alt text](Tools-For-DevOpsjpg.jpg)
+
+Updating to be quick reference guide for all point bullets for Agile DevOps SRE and so on
+
